@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"sync"
 
 	"github.com/koolvn/study-go.git/helper"
 )
@@ -12,6 +13,7 @@ const conferenceTickets int = 50
 var conferenceName string = "Go conference"
 var remainingTickets uint = 50
 var bookings = make([]helper.UserData, 0)
+var waitGroup = sync.WaitGroup{}
 
 func greetUsers() {
 	fmt.Printf("Welcome to %v booking app\n", conferenceName)
@@ -65,12 +67,13 @@ func main() {
 			bookTicket(user)
 			logger.Printf("User %v booked %v tickets\n", firstName, userTickets)
 			logger.Printf("%v out of %v tickets remaining", remainingTickets, conferenceTickets)
-			helper.SendTickets(user)
+			waitGroup.Add(1)
+			go helper.SendTickets(user)
 			if remainingTickets == 0 {
 				logger.Printf("Sold out!")
 				break
 			}
 		}
-
 	}
+	waitGroup.Wait()
 }
