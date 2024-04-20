@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/koolvn/study-go.git/helper"
 	"log"
+
+	"github.com/koolvn/study-go.git/helper"
 )
 
 const conferenceTickets int = 50
@@ -11,8 +12,6 @@ const conferenceTickets int = 50
 var conferenceName string = "Go conference"
 var remainingTickets uint = 50
 var bookings = make([]helper.UserData, 0)
-
-
 
 func greetUsers() {
 	fmt.Printf("Welcome to %v booking app\n", conferenceName)
@@ -40,15 +39,9 @@ func getUserInputs() (string, string, string, uint) {
 	return firstName, lastName, email, userTickets
 }
 
-func bookTicket(userName string, lastName string, email string, numTickets uint) {
-	var userData = helper.UserData{
-		FirstName:        userName,
-		LastName:         lastName,
-		Email:            email,
-		NumBookedTickets: numTickets,
-	}
-	bookings = append(bookings, userData)
-	remainingTickets -= numTickets
+func bookTicket(user helper.UserData) {
+	bookings = append(bookings, user)
+	remainingTickets -= user.NumBookedTickets
 }
 
 func main() {
@@ -56,25 +49,23 @@ func main() {
 	for {
 		greetUsers()
 		firstName, lastName, email, userTickets := getUserInputs()
+		user := helper.UserData{
+			FirstName:        firstName,
+			LastName:         lastName,
+			Email:            email,
+			NumBookedTickets: userTickets,
+		}
 		if userTickets > remainingTickets {
 			log.Printf("You can't book more than %v remaining tickets!\n", remainingTickets)
 			continue
 		}
 		isFirstNameValid, isLastNameValid, isEmailValid := helper.ValidateUserInput(firstName, lastName, email)
-		if !isFirstNameValid {
-			logger.Println("First name can't contain only 1 letter")
-		}
-		if !isLastNameValid {
-			logger.Println("Last name can't contain only 1 letter")
-		}
-		if !isEmailValid {
-			logger.Println("Wrong email")
-		}
 
 		if isFirstNameValid && isLastNameValid && isEmailValid {
-			bookTicket(firstName, lastName, email, userTickets)
+			bookTicket(user)
 			logger.Printf("User %v booked %v tickets\n", firstName, userTickets)
 			logger.Printf("%v out of %v tickets remaining", remainingTickets, conferenceTickets)
+			helper.SendTickets(user)
 			if remainingTickets == 0 {
 				logger.Printf("Sold out!")
 				break
