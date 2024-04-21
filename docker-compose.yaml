@@ -1,0 +1,10 @@
+services:
+  openai-proxy:
+    image: openai-proxy:latest
+    build:
+      context: .
+    container_name: openai-proxy
+    ports:
+      - "28082:28082"
+    restart: "unless-stopped"
+    entrypoint: /app/openai-proxy
