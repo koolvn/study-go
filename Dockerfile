@@ -8,8 +8,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o openai-proxy .
 FROM alpine:latest  
 
 WORKDIR /root/
-COPY --from=builder /etc/passwd /etc/passwd
-COPY --from=builder /etc/group /etc/group
+RUN addgroup -S nobody && adduser -S nobody -G nobody
 COPY --from=builder /app/openai-proxy .
 # Use an unprivileged user
 USER nobody:nobody
