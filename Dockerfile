@@ -7,7 +7,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o openai-proxy .
 
 FROM alpine:latest  
 
-WORKDIR /root/
+WORKDIR /app/
 RUN getent group nobody || addgroup -S nobody
 RUN id -u nobody || adduser -S nobody -G nobody
 
