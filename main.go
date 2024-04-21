@@ -57,6 +57,8 @@ func main() {
 			Email:            email,
 			NumBookedTickets: userTickets,
 		}
+
+		fmt.Printf("\n\n***\n%v\n***\n\n", user.ShowData())
 		if userTickets > remainingTickets {
 			log.Printf("You can't book more than %v remaining tickets!\n", remainingTickets)
 			continue
