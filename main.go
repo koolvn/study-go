@@ -2,11 +2,10 @@ package main
 
 import (
 	"flag"
-	"github.com/koolvn/study-go.git/structs"
-	"github.com/koolvn/study-go.git/utils"
-	"html/template"
 	"log"
 	"net/http"
+
+	"github.com/koolvn/study-go.git/handlers"
 )
 
 func main() {
@@ -22,27 +21,12 @@ func main() {
 
 func createMux() *http.ServeMux {
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /favicon.ico", func(w http.ResponseWriter, r *http.Request) {
-		http.NotFound(w, r)
-	})
-	mux.HandleFunc("GET /", serveRoot)
-	return mux
-}
+	mux.HandleFunc("GET /favicon.ico",
+		func(w http.ResponseWriter, r *http.Request) {
+			http.NotFound(w, r)
+		})
+	mux.HandleFunc("GET /", handlers.ServeRoot)
+	mux.HandleFunc("POST /image", handlers.ReceiveImage)
 
-func serveRoot(w http.ResponseWriter, r *http.Request) {
-	browser := utils.GetBrowserName(r.Header.Get("User-Agent"))
-	user := structs.User{
-		Ip:      r.RemoteAddr,
-		Browser: browser,
-	}
-	log.Printf("[INFO]  GET / from %s", user)
-	tmpl, err := template.ParseFiles("html/index.html")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	err = tmpl.Execute(w, user)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+	return mux
 }

@@ -18,10 +18,25 @@
         }
     </style>
     <title>Hello GO API world!</title>
+    <link rel="stylesheet" type="text/css" href="header-styles.css">
 </head>
+<header class="header">
+    <nav>
+        <ul>
+            <li><a href="#">Home</a></li>
+        </ul>
+        <ul>
+            <li><a href="#">About</a></li>
+        </ul>
+        <ul>
+            <li><a href="#">Contact</a></li>
+        </ul>
+    </nav>
+</header>
 <body>
 <h1>Welcome to my Go studying page</h1>
 <p>This is a simple page created to study Go language. Enjoy your learning journey!</p>
 <p>You are connected from {{.Ip}} and using {{.Browser}} browser</p>
+<script src="scripts.js"></script>
 </body>
 </html>
