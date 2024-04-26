@@ -6,12 +6,12 @@ import (
 	"github.com/koolvn/study-go.git/auth"
 	"github.com/koolvn/study-go.git/types"
 	"github.com/koolvn/study-go.git/utils"
-	"log"
+	log "golang.org/x/exp/slog"
 	"net/http"
 )
 
 func AuthPageHandler(w http.ResponseWriter, r *http.Request) {
-	log.Printf("Received auth page request from %v", r.RemoteAddr)
+	log.Debug(fmt.Sprintf("Received auth page request from %v", r.RemoteAddr))
 	handler := http.FileServer(http.Dir("static"))
 	handler.ServeHTTP(w, r)
 }
@@ -20,7 +20,7 @@ func AuthHandler(w http.ResponseWriter, r *http.Request) {
 	var creds types.Credentials
 	w.Header().Set("Content-Type", "application/json")
 
-	log.Printf("Received auth request from %v", r.RemoteAddr)
+	log.Debug(fmt.Sprintf("Received auth request from %v", r.RemoteAddr))
 	err := json.NewDecoder(r.Body).Decode(&creds)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -36,11 +36,11 @@ func AuthHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if authorized {
-		log.Printf("User %v authenticated: %v", creds.Username, authorized)
+		log.Info(fmt.Sprintf("User %v authenticated: %v", creds.Username, authorized))
 		utils.PrepareResponse("Authorized", "", w)
 	} else {
 		msg := fmt.Sprintf("User %v authentication failed", creds.Username)
-		log.Printf(msg)
+		log.Info(msg)
 		w.WriteHeader(http.StatusUnauthorized)
 		utils.PrepareResponse("Unauthorized", msg, w)
 	}

@@ -2,17 +2,12 @@ package auth
 
 import (
 	"fmt"
+	"github.com/koolvn/study-go.git/types"
 	"os"
 
 	"github.com/go-ldap/ldap"
 	log "golang.org/x/exp/slog"
 )
-
-// UserLogin struct represents the user credentials.
-type UserLogin struct {
-	Username string
-	Password string
-}
 
 // Connect establishes a connection to the LDAP server.
 func Connect() (*ldap.Conn, error) {
@@ -33,7 +28,7 @@ func Connect() (*ldap.Conn, error) {
 }
 
 // Auth performs LDAP authentication for the provided user credentials.
-func Auth(conn *ldap.Conn, user UserLogin) (bool, error) {
+func Auth(conn *ldap.Conn, user types.UserLogin) (bool, error) {
 	searchRequest := ldap.NewSearchRequest(
 		os.Getenv("LDAP_BASE_DN"),
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
@@ -44,13 +39,15 @@ func Auth(conn *ldap.Conn, user UserLogin) (bool, error) {
 
 	searchResp, err := conn.Search(searchRequest)
 	if err != nil {
-		msg := fmt.Sprintf("LDAP search failed for user `%s`, error details: %v", user.Username, err)
+		msg := fmt.Sprintf(
+			"LDAP search failed for user `%s`, error details: %v", user.Username, err)
 		log.Error(msg)
 		return false, err
 	}
 
 	if len(searchResp.Entries) != 1 {
-		msg := fmt.Sprintf("User `%s` not found or multiple entries found", user.Username)
+		msg := fmt.Sprintf(
+			"User `%s` not found or multiple entries found", user.Username)
 		log.Error(msg)
 		err = fmt.Errorf(msg)
 		return false, err
@@ -60,7 +57,9 @@ func Auth(conn *ldap.Conn, user UserLogin) (bool, error) {
 	userDN := searchResp.Entries[0].DN
 	err = conn.Bind(userDN, user.Password)
 	if err != nil {
-		msg := fmt.Sprintf("LDAP authentication failed for user `%s`, error details: %v", user.Username, err)
+		msg := fmt.Sprintf(
+			"LDAP authentication failed for user `%s`, error details: %v",
+			user.Username, err)
 		log.Error(msg)
 		err = fmt.Errorf(msg)
 		return false, err
@@ -69,7 +68,7 @@ func Auth(conn *ldap.Conn, user UserLogin) (bool, error) {
 }
 
 func AuthenticateUser(username string, password string) (bool, error) {
-	user := UserLogin{
+	user := types.UserLogin{
 		Username: username,
 		Password: password,
 	}
@@ -84,12 +83,6 @@ func AuthenticateUser(username string, password string) (bool, error) {
 	authenticated, authErr := Auth(conn, user)
 	if authErr != nil {
 		return false, authErr
-	}
-
-	if authenticated {
-		log.Info("User authenticated successfully.")
-	} else {
-		log.Warn("Authentication failed. Invalid credentials.")
 	}
 	return authenticated, nil
 }
