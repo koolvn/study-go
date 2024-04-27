@@ -12,7 +12,7 @@ import (
 
 func AuthPageHandler(w http.ResponseWriter, r *http.Request) {
 	log.Debug(fmt.Sprintf("Received auth page request from %v", r.RemoteAddr))
-	handler := http.FileServer(http.Dir("static"))
+	handler := http.FileServer(http.Dir("./static"))
 	handler.ServeHTTP(w, r)
 }
 
@@ -29,20 +29,18 @@ func AuthHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	authorized, err := auth.AuthenticateUser(creds.Username, creds.Password)
-	if err != nil {
+	if err != nil || !authorized {
 		w.WriteHeader(http.StatusUnauthorized)
-		utils.PrepareResponse("Unauthorized", err.Error(), w)
+		_err := ""
+		if err != nil {
+			_err = err.Error()
+		}
+		utils.PrepareResponse("Unauthorized", _err, w)
 		return
 	}
 
-	if authorized {
-		log.Info(fmt.Sprintf("User %v authenticated: %v", creds.Username, authorized))
-		utils.PrepareResponse("Authorized", "", w)
-	} else {
-		msg := fmt.Sprintf("User %v authentication failed", creds.Username)
-		log.Info(msg)
-		w.WriteHeader(http.StatusUnauthorized)
-		utils.PrepareResponse("Unauthorized", msg, w)
-	}
+	log.Info(fmt.Sprintf("User %v authenticated: %v", creds.Username, authorized))
 	w.WriteHeader(http.StatusOK)
+	w.Header().Set("X-Auth-OK", "true")
+	utils.PrepareResponse("Authorized", "", w)
 }
