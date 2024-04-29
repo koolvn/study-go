@@ -8,50 +8,50 @@ import (
 	"os"
 )
 
-var host = getEnv("OPENAI_PROXY_HOST", "0.0.0.0")
-var port = getEnv("OPENAI_PROXY_PORT", "28082")
-var certFile = getEnv("OPENAI_PROXY_CERT_PATH", "")
-var keyFile = getEnv("OPENAI_PROXY_CERT_KEY_PATH", "")
+const defaultHost = "0.0.0.0"
+const defaultPort = "28082"
+const apiTarget = "api.openai.com"
 
 func getEnv(key, defaultValue string) string {
-	value := os.Getenv(key)
-	if value == "" {
-		return defaultValue
+	if value, exists := os.LookupEnv(key); exists {
+		return value
 	}
-	return value
+	return defaultValue
 }
 
+// ReverseProxyHandler forwards requests to `apiTarget` and logs the request and response headers.
 func ReverseProxyHandler(w http.ResponseWriter, r *http.Request) {
-	log.Printf("[INFO] receive a request from %s, request header:\n %s: \n", r.RemoteAddr, r.Header)
-	target := "api.openai.com"
+	log.Printf("[INFO] Received a request from %s, request header: %v\n", r.RemoteAddr, r.Header)
+
 	director := func(req *http.Request) {
 		req.URL.Scheme = "https"
-		req.URL.Host = target
-		req.Host = target
+		req.URL.Host = apiTarget
+		req.Host = apiTarget
 	}
 	proxy := &httputil.ReverseProxy{Director: director}
 	proxy.ServeHTTP(w, r)
-	log.Printf("[*] receive the destination website response header: %s\n", w.Header())
+
+	log.Printf("[INFO] Received the destination website response header: %v\n", w.Header())
 }
 
 func main() {
-	log.Printf("[INFO] PID: %d PPID: %d\n", os.Getpid(), os.Getppid())
+	host := getEnv("OPENAI_PROXY_HOST", defaultHost)
+	port := getEnv("OPENAI_PROXY_PORT", defaultPort)
+	certFile := getEnv("OPENAI_PROXY_CERT_PATH", "")
+	keyFile := getEnv("OPENAI_PROXY_CERT_KEY_PATH", "")
+
+	log.Printf("[INFO] PID: %d, PPID: %d", os.Getpid(), os.Getppid())
+
 	servingAddr := fmt.Sprintf("%s:%s", host, port)
 	if certFile != "" && keyFile != "" {
-		log.Printf("[INFO] Starting server at  https://%s\n", servingAddr)
-		err := http.ListenAndServeTLS(
-			servingAddr,
-			certFile,
-			keyFile,
-			http.HandlerFunc(ReverseProxyHandler))
-		if err != nil {
-			log.Fatal(err)
+		log.Printf("[INFO] Starting server at https://%s\n", servingAddr)
+		if err := http.ListenAndServeTLS(servingAddr, certFile, keyFile, http.HandlerFunc(ReverseProxyHandler)); err != nil {
+			log.Fatalf("[ERROR] Failed to start TLS server: %v\n", err)
 		}
 	} else {
-		log.Printf("[INFO] Starting server at  http://%s\n", servingAddr)
-		err := http.ListenAndServe(servingAddr, http.HandlerFunc(ReverseProxyHandler))
-		if err != nil {
-			log.Fatal(err)
+		log.Printf("[INFO] Starting server at http://%s\n", servingAddr)
+		if err := http.ListenAndServe(servingAddr, http.HandlerFunc(ReverseProxyHandler)); err != nil {
+			log.Fatalf("[ERROR] Failed to start server: %v\n", err)
 		}
 	}
 }
