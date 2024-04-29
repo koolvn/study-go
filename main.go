@@ -1,23 +1,24 @@
 package main
 
 import (
-	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"os"
-	"os/exec"
-	"strconv"
 )
 
-const DAEMON = "daemon"
+var host = getEnv("OPENAI_PROXY_HOST", "0.0.0.0")
+var port = getEnv("OPENAI_PROXY_PORT", "28082")
+var certFile = getEnv("OPENAI_PROXY_CERT_PATH", "")
+var keyFile = getEnv("OPENAI_PROXY_CERT_KEY_PATH", "")
 
-var port int
-var daemon bool
-
-func init() {
-	flag.IntVar(&port, "port", 28082, "Listen Port")
-	flag.BoolVar(&daemon, DAEMON, false, "Daemon mode")
+func getEnv(key, defaultValue string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		return defaultValue
+	}
+	return value
 }
 
 func ReverseProxyHandler(w http.ResponseWriter, r *http.Request) {
@@ -33,42 +34,24 @@ func ReverseProxyHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("[*] receive the destination website response header: %s\n", w.Header())
 }
 
-func StripSlice(slice []string, element string) []string {
-	for i := 0; i < len(slice); {
-		if slice[i] == element && i != len(slice)-1 {
-			slice = append(slice[:i], slice[i+1:]...)
-		} else if slice[i] == element && i == len(slice)-1 {
-			slice = slice[:i]
-		} else {
-			i++
-		}
-	}
-	return slice
-}
-
-func SubProcess(args []string) *exec.Cmd {
-	cmd := exec.Command(args[0], args[1:]...)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Start()
-	if err != nil {
-		log.Printf("[-] Error: %s\n", err)
-	}
-	return cmd
-}
-
 func main() {
-	flag.Parse()
-	log.Printf("[*] PID: %d PPID: %d ARG: %s\n", os.Getpid(), os.Getppid(), os.Args)
-	if daemon {
-		SubProcess(StripSlice(os.Args, "-"+DAEMON))
-		log.Printf("[*] Daemon running in PID: %d PPID: %d\n", os.Getpid(), os.Getppid())
-		os.Exit(0)
-	}
-	log.Printf("[*] Forever running in PID: %d PPID: %d\n", os.Getpid(), os.Getppid())
-	log.Printf("[*] Starting server at port %v\n", port)
-	if err := http.ListenAndServe(":"+strconv.Itoa(port), http.HandlerFunc(ReverseProxyHandler)); err != nil {
-		log.Fatal(err)
+	log.Printf("[INFO] PID: %d PPID: %d\n", os.Getpid(), os.Getppid())
+	servingAddr := fmt.Sprintf("%s:%s", host, port)
+	if certFile != "" && keyFile != "" {
+		log.Printf("[INFO] Starting server at  https://%s\n", servingAddr)
+		err := http.ListenAndServeTLS(
+			servingAddr,
+			certFile,
+			keyFile,
+			http.HandlerFunc(ReverseProxyHandler))
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		log.Printf("[INFO] Starting server at  http://%s\n", servingAddr)
+		err := http.ListenAndServe(servingAddr, http.HandlerFunc(ReverseProxyHandler))
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 }

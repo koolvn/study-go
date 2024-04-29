@@ -4,6 +4,11 @@ services:
     build:
       context: .
     container_name: openai-proxy
+    environment:
+      OPENAI_PROXY_HOST: "0.0.0.0"
+      OPENAI_PROXY_PORT: "28082"
+      OPENAI_PROXY_CERT_PATH: ""
+      OPENAI_PROXY_CERT_KEY_PATH: ""
     ports:
       - "28082:28082"
     restart: "unless-stopped"
