@@ -80,18 +80,18 @@ func StringLevelToLogLevel(level string) int {
 }
 
 func LogLevelToStringLevel(level int) string {
+	var logLevel string
 	switch {
-	case level <= 10:
-		return "debug"
-	case level <= 20:
-		return "info"
-	case level <= 30:
-		return "warning"
-	case level <= 40:
-		return "error"
-	case level <= 50:
-		return "critical"
+	case level < 20:
+		logLevel = "debug"
+	case level < 30:
+		logLevel = "info"
+	case level < 40:
+		logLevel = "warning"
+	case level < 50:
+		logLevel = "error"
 	default:
-		return "unknown"
+		logLevel = "critical"
 	}
+	return strings.ToUpper(logLevel)
 }
