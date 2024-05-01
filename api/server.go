@@ -70,8 +70,10 @@ func (api *API) Start() error {
 }
 
 func (api *API) configureRoutes() *mux.Router {
-	router := mux.NewRouter()
+	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/", HandleRoot).Methods("GET")
+	router.HandleFunc("/auth", HandleAuth).Methods("POST")
+	router.HandleFunc("/auth/verify", HandleAuthVerify).Methods("POST")
 	//apiV1 := router.PathPrefix("/api/v1").Subrouter()
 
 	return router
