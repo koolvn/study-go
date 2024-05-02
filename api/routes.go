@@ -21,7 +21,9 @@ func HandleRoot(w http.ResponseWriter, r *http.Request) {
 func HandleAuth(w http.ResponseWriter, r *http.Request) {
 	logRequest("[INFO] Received auth request", r)
 
-	var authRequest auth.UserLogin
+	var authRequest auth.LDAPUser
+	authenticator := auth.NewLDAPAuthenticator()
+
 	if err := json.NewDecoder(r.Body).Decode(&authRequest); err != nil {
 		msg := "[ERROR] " + err.Error()
 		log.Println(msg)
@@ -35,7 +37,7 @@ func HandleAuth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	isLdapAuthorized, errLDAP := auth.LdapAuthenticateUser(authRequest)
+	isLdapAuthorized, errLDAP := authenticator.AuthorizeUser(authRequest)
 	if errLDAP != nil {
 		msg := "[ERROR] " + errLDAP.Error()
 		log.Println(msg)

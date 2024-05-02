@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"github.com/koolvn/study-go.git/config"
 	"log"
 	"net/http"
 	"os"
@@ -22,13 +23,18 @@ type API struct {
 	server   *http.Server
 }
 
-func NewAPI(host string, port string, https bool, certPath string, keyPath string) *API {
+func NewAPI(config config.Config) *API {
+	host := config.Host
+	port := config.Port
+	certFile := config.CertFile
+	keyFile := config.KeyFile
+	https := config.Https
 	return &API{
 		host:     host,
 		port:     port,
 		https:    https,
-		certPath: certPath,
-		keyPath:  keyPath,
+		certPath: certFile,
+		keyPath:  keyFile,
 	}
 }
 
