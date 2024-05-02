@@ -2,8 +2,9 @@ package main
 
 import (
 	"flag"
-	"github.com/koolvn/study-go.git/api"
 	"log"
+
+	"github.com/koolvn/study-go.git/api"
 )
 
 func main() {

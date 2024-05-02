@@ -7,10 +7,6 @@ import (
 	"github.com/koolvn/study-go.git/auth"
 )
 
-type AuthRequest struct {
-	Username string `json:"username"`
-}
-
 type VerifyRequest struct {
 	Token string `json:"token"`
 }
@@ -23,18 +19,27 @@ func HandleRoot(w http.ResponseWriter, r *http.Request) {
 func HandleAuth(w http.ResponseWriter, r *http.Request) {
 	logRequest("[INFO] Received auth request", r)
 
-	var authRequest AuthRequest
+	var authRequest auth.UserLogin
 	if err := json.NewDecoder(r.Body).Decode(&authRequest); err != nil {
 		writeError(w, "Bad request", http.StatusBadRequest, err)
 		return
 	}
 	defer r.Body.Close()
 
-	if authRequest.Username == "" {
-		writeError(w, "Bad request: username is required", http.StatusBadRequest, nil)
+	if authRequest.Username == "" || authRequest.Password == "" {
+		writeError(w, "Bad request: username and password are required", http.StatusBadRequest, nil)
 		return
 	}
 
+	isLdapAuthorized, errLDAP := auth.LdapAuthenticateUser(authRequest)
+	if errLDAP != nil {
+		writeError(w, errLDAP.Error(), http.StatusBadRequest, nil)
+		return
+	}
+	if !isLdapAuthorized {
+		writeError(w, "LDAP authorization failed", http.StatusUnauthorized, nil)
+		return
+	}
 	token, err := auth.CreateToken(authRequest.Username)
 	if err != nil {
 		writeError(w, "Internal server error", http.StatusInternalServerError, err)

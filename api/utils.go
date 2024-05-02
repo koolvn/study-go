@@ -36,7 +36,7 @@ func logRequest(message string, r *http.Request) {
 
 func writeError(w http.ResponseWriter, message string, statusCode int, err error) {
 	if err != nil {
-		log.Printf("Error: %s", err)
+		log.Printf("[ERROR] %s", err)
 		http.Error(w, fmt.Sprintf("%s: %s", message, err), statusCode)
 	} else {
 		http.Error(w, message, statusCode)
