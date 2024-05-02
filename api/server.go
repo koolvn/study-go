@@ -44,7 +44,7 @@ func (api *API) Start() error {
 	// Handling graceful shutdown
 	go func() {
 		stop := make(chan os.Signal, 1)
-		signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+		signal.Notify(stop, os.Interrupt, syscall.SIGTERM, syscall.SIGKILL)
 
 		<-stop
 
@@ -55,6 +55,8 @@ func (api *API) Start() error {
 
 		if err := api.server.Shutdown(ctx); err != nil {
 			log.Fatalf("[ERROR] Error shutting down server: %v", err)
+		} else {
+			log.Println("[INFO] Server shutdown completed.")
 		}
 
 		log.Println("[INFO] Server gracefully stopped.")
@@ -72,7 +74,7 @@ func (api *API) Start() error {
 
 func (api *API) configureRoutes() *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/", HandleRoot).Methods("GET")
+	router.PathPrefix("/").HandlerFunc(HandleRoot).Methods("GET")
 	router.HandleFunc("/auth", HandleAuth).Methods("POST")
 	router.HandleFunc("/auth/verify", HandleAuthVerify).Methods("POST")
 	//apiV1 := router.PathPrefix("/api/v1").Subrouter()

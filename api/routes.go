@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/koolvn/study-go.git/auth"
@@ -13,7 +14,8 @@ type VerifyRequest struct {
 
 func HandleRoot(w http.ResponseWriter, r *http.Request) {
 	logRequest("[INFO] Received request for /", r)
-	writeJSONResponse(http.StatusOK, "Hello World", w)
+	handler := http.FileServer(http.Dir("static"))
+	handler.ServeHTTP(w, r)
 }
 
 func HandleAuth(w http.ResponseWriter, r *http.Request) {
@@ -21,28 +23,34 @@ func HandleAuth(w http.ResponseWriter, r *http.Request) {
 
 	var authRequest auth.UserLogin
 	if err := json.NewDecoder(r.Body).Decode(&authRequest); err != nil {
-		writeError(w, "Bad request", http.StatusBadRequest, err)
+		msg := "[ERROR] " + err.Error()
+		log.Println(msg)
+		writeJSONResponse(http.StatusBadRequest, msg, w)
 		return
 	}
 	defer r.Body.Close()
 
 	if authRequest.Username == "" || authRequest.Password == "" {
-		writeError(w, "Bad request: username and password are required", http.StatusBadRequest, nil)
+		writeJSONResponse(http.StatusBadRequest, "username and password are required", w)
 		return
 	}
 
 	isLdapAuthorized, errLDAP := auth.LdapAuthenticateUser(authRequest)
 	if errLDAP != nil {
-		writeError(w, errLDAP.Error(), http.StatusBadRequest, nil)
+		msg := "[ERROR] " + errLDAP.Error()
+		log.Println(msg)
+		writeJSONResponse(http.StatusUnauthorized, msg, w)
 		return
 	}
 	if !isLdapAuthorized {
-		writeError(w, "LDAP authorization failed", http.StatusUnauthorized, nil)
+		writeJSONResponse(http.StatusUnauthorized, "LDAP authorization failed", w)
 		return
 	}
 	token, err := auth.CreateToken(authRequest.Username)
 	if err != nil {
-		writeError(w, "Internal server error", http.StatusInternalServerError, err)
+		msg := "[ERROR] " + err.Error()
+		log.Println(msg)
+		writeJSONResponse(http.StatusInternalServerError, msg, w)
 		return
 	}
 
@@ -54,18 +62,22 @@ func HandleAuthVerify(w http.ResponseWriter, r *http.Request) {
 
 	var verifyRequest VerifyRequest
 	if err := json.NewDecoder(r.Body).Decode(&verifyRequest); err != nil {
-		writeError(w, "Bad request", http.StatusBadRequest, err)
+		msg := "[ERROR] " + err.Error()
+		log.Println(msg)
+		writeJSONResponse(http.StatusBadRequest, msg, w)
 		return
 	}
 	defer r.Body.Close()
 
 	if verifyRequest.Token == "" {
-		writeError(w, "No token provided", http.StatusUnauthorized, nil)
+		writeJSONResponse(http.StatusUnauthorized, "No token provided", w)
 		return
 	}
 
 	if err := auth.VerifyToken(verifyRequest.Token); err != nil {
-		writeError(w, "Unauthorized", http.StatusUnauthorized, err)
+		msg := "[ERROR] " + err.Error()
+		log.Println(msg)
+		writeJSONResponse(http.StatusUnauthorized, msg, w)
 	} else {
 		writeJSONResponse(http.StatusOK, "Token verified!", w)
 	}

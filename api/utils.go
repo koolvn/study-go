@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 )
@@ -32,13 +31,4 @@ func writeJSONResponse(statusCode int, details any, w http.ResponseWriter) {
 
 func logRequest(message string, r *http.Request) {
 	log.Printf("%s from %s", message, r.RemoteAddr)
-}
-
-func writeError(w http.ResponseWriter, message string, statusCode int, err error) {
-	if err != nil {
-		log.Printf("[ERROR] %s", err)
-		http.Error(w, fmt.Sprintf("%s: %s", message, err), statusCode)
-	} else {
-		http.Error(w, message, statusCode)
-	}
 }

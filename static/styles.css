@@ -1,0 +1,45 @@
+body {
+    background-color: #fffbf8;
+    font-family: Arial, sans-serif;
+}
+
+#status {
+    font-size: 24px;
+    text-align: center;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+#details {
+    font-size: 16px;
+    text-align: center;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+#auth-form {
+    background-color: #aec6cf;
+    padding: 20px;
+    width: fit-content;
+    margin: 0 auto;
+    justify-content: center;
+}
+
+#auth-form input[type="text"], #auth-form input[type="password"] {
+    width: 80%;
+    padding: 10px;
+    margin: 10px 0;
+}
+
+#auth-form button[type="submit"] {
+    background-color: #333;
+    color: #fff;
+    padding: 20px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    display: block;
+    margin: auto;
+    font-size: 16px;
+    font-weight: bold;
+}

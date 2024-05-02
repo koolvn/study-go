@@ -2,7 +2,6 @@ package auth
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/go-ldap/ldap"
@@ -40,16 +39,12 @@ func LdapAuthenticateUser(user UserLogin) (bool, error) {
 
 // LdapConnect establishes a connection to the LDAP server.
 func LdapConnect() (*ldap.Conn, error) {
-	conn, err := ldap.DialURL(os.Getenv("LDAP_ADDRESS"))
-	if err != nil {
-		msg := fmt.Sprintf("[ERROR] LDAP connection failed, error details: %v", err)
-		log.Println(msg)
-		return nil, err
+	conn, errConnect := ldap.DialURL(os.Getenv("LDAP_ADDRESS"))
+	if errConnect != nil {
+		return nil, errConnect
 	}
 
 	if err := conn.Bind(os.Getenv("BIND_USER"), os.Getenv("BIND_PASSWORD")); err != nil {
-		msg := fmt.Sprintf("[ERROR] LDAP bind failed while connecting, error details: %v", err)
-		log.Println(msg)
 		return nil, err
 	}
 
@@ -68,28 +63,21 @@ func LdapAuth(conn *ldap.Conn, user UserLogin) (bool, error) {
 
 	searchResp, err := conn.Search(searchRequest)
 	if err != nil {
-		msg := fmt.Sprintf(
-			"[ERROR] LDAP search failed for user `%s`, error details: %v", user.Username, err)
-		log.Println(msg)
 		return false, err
 	}
 
 	if len(searchResp.Entries) != 1 {
 		msg := fmt.Sprintf(
-			"[ERROR] User `%s` not found or multiple entries found", user.Username)
-		log.Println(msg)
+			"user `%s` not found or multiple entries found", user.Username)
 		err = fmt.Errorf(msg)
 		return false, err
 	}
-	msg := fmt.Sprintf("[INFO] User `%s` found", user.Username)
-	log.Println(msg)
 	userDN := searchResp.Entries[0].DN
 	err = conn.Bind(userDN, user.Password)
 	if err != nil {
 		msg := fmt.Sprintf(
-			"[ERROR] LDAP authentication failed for user `%s`, error details: %v",
+			"LDAP authentication failed for user `%s`, error details: %v",
 			user.Username, err)
-		log.Println(msg)
 		err = fmt.Errorf(msg)
 		return false, err
 	}
