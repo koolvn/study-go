@@ -14,7 +14,7 @@ type VerifyRequest struct {
 
 func HandleRoot(w http.ResponseWriter, r *http.Request) {
 	logRequest("[INFO] Received request for /", r)
-	handler := http.FileServer(http.Dir("static"))
+	handler := http.FileServer(http.Dir("api/static"))
 	handler.ServeHTTP(w, r)
 }
 
