@@ -7,24 +7,32 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func CreateToken(username string) (string, error) {
+func CreateToken(username string) (map[string]any, error) {
 	privateKey, errPrivateKey := loadPrivateKey("certs/jwt/ed25519_private.pem")
 	if errPrivateKey != nil {
-		return "", errPrivateKey
+		return map[string]any{}, errPrivateKey
 	}
+
+	expiresAt := time.Now().Add(time.Hour * 24).Unix()
+	issuedAt := time.Now().Unix()
 	token := jwt.NewWithClaims(
 		jwt.SigningMethodEdDSA,
 		jwt.MapClaims{
 			"username": username,
-			"exp":      time.Now().Add(time.Hour * 24).Unix(),
-			"iat":      time.Now().Unix(),
+			"exp":      expiresAt,
+			"iat":      issuedAt,
 		})
 	tokenString, err := token.SignedString(privateKey)
 	if err != nil {
-		return "", err
+		return map[string]any{}, err
 	}
 
-	return tokenString, nil
+	tokenMap := map[string]any{
+		"token":      tokenString,
+		"expires_at": time.Unix(expiresAt, 0).Format("2006-01-02 15:04:05 MST"),
+		"issued_at":  time.Unix(issuedAt, 0).Format("2006-01-02 15:04:05 MST"),
+	}
+	return tokenMap, nil
 }
 
 func VerifyToken(tokenString string) error {

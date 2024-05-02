@@ -46,7 +46,7 @@ func HandleAuth(w http.ResponseWriter, r *http.Request) {
 		writeJSONResponse(http.StatusUnauthorized, "LDAP authorization failed", w)
 		return
 	}
-	token, err := auth.CreateToken(authRequest.Username)
+	tokenMap, err := auth.CreateToken(authRequest.Username)
 	if err != nil {
 		msg := "[ERROR] " + err.Error()
 		log.Println(msg)
@@ -54,7 +54,7 @@ func HandleAuth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSONResponse(http.StatusOK, map[string]string{"token": token}, w)
+	writeJSONResponse(http.StatusOK, tokenMap, w)
 }
 
 func HandleAuthVerify(w http.ResponseWriter, r *http.Request) {
