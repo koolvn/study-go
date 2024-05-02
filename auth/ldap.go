@@ -2,59 +2,58 @@ package auth
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/go-ldap/ldap"
+	"github.com/koolvn/study-go.git/config"
 )
 
-type UserLogin struct {
+type LDAPUser struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
 
-// LdapAuthenticateUser authenticates a user against an LDAP server.
-// It takes a UserLogin struct as input, which contains the user's credentials,
-// and returns a boolean indicating whether the authentication was successful,
-// along with an error if the authentication process fails at any point.
-// The function establishes a connection to the LDAP server using LdapConnect,
-// and defers the closing of this connection until the function completes.
-// It then attempts to authenticate the user with the provided credentials
-// using the LdapAuth function. If any step fails, the function returns false
-// and the error encountered. Otherwise, it returns true and nil error upon
-// successful authentication.
-func LdapAuthenticateUser(user UserLogin) (bool, error) {
-	conn, err := LdapConnect()
+type LDAPAuthenticator struct {
+	cfg config.Config
+}
+
+func NewLDAPAuthenticator() *LDAPAuthenticator {
+	return &LDAPAuthenticator{cfg: *config.NewConfig()}
+}
+
+// AuthorizeUser attempts to authenticate a given LDAPUser against the LDAP server.
+func (a LDAPAuthenticator) AuthorizeUser(user LDAPUser) (bool, error) {
+	conn, err := a.connect()
 	if err != nil {
 		return false, err
 	}
 
 	defer conn.Close()
 
-	authenticated, authErr := LdapAuth(conn, user)
+	authenticated, authErr := a.authorize(conn, user)
 	if authErr != nil {
 		return false, authErr
 	}
 	return authenticated, nil
 }
 
-// LdapConnect establishes a connection to the LDAP server.
-func LdapConnect() (*ldap.Conn, error) {
-	conn, errConnect := ldap.DialURL(os.Getenv("LDAP_ADDRESS"))
+// connect establishes a connection to the LDAP server.
+func (a LDAPAuthenticator) connect() (*ldap.Conn, error) {
+	conn, errConnect := ldap.DialURL(a.cfg.LdapAddr)
 	if errConnect != nil {
 		return nil, errConnect
 	}
 
-	if err := conn.Bind(os.Getenv("BIND_USER"), os.Getenv("BIND_PASSWORD")); err != nil {
+	if err := conn.Bind(a.cfg.LdapBindUser, a.cfg.LdapBindPass); err != nil {
 		return nil, err
 	}
 
 	return conn, nil
 }
 
-// LdapAuth performs LDAP authentication for the provided user credentials.
-func LdapAuth(conn *ldap.Conn, user UserLogin) (bool, error) {
+// authorize performs LDAP authentication for the provided user credentials.
+func (a LDAPAuthenticator) authorize(conn *ldap.Conn, user LDAPUser) (bool, error) {
 	searchRequest := ldap.NewSearchRequest(
-		os.Getenv("LDAP_BASE_DN"),
+		a.cfg.LdapBaseDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
 		fmt.Sprintf("(sAMAccountName=%s)", user.Username),
 		[]string{"dn"},
