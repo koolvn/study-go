@@ -1,0 +1,24 @@
+networks:
+  docker-mirror:
+
+services:
+  docker-registry-mirror:
+    image: registry:2
+    container_name: docker-registry-mirror
+    restart: unless-stopped
+    environment:
+      REGISTRY_PROXY_REMOTEURL: "https://registry-1.docker.io"
+    ports:
+      - "443:443"
+    volumes:
+      - ./certs/dockerio.ru/fullchain.pem:/certs/dockerio.ru/fullchain.pem:ro
+      - ./certs/dockerio.ru/privkey.pem:/certs/dockerio.ru/privkey.pem:ro
+      - ./config.yml:/etc/docker/registry/config.yml
+      - ./registry-cache:/var/lib/registry
+    networks:
+      - docker-mirror
+    logging:
+      driver: json-file
+      options:
+        max-size: "2048k"
+        max-file: "10"

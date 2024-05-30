@@ -5,12 +5,12 @@ log:
     environment: production
 
 http:
-  addr: :5000
+  addr: :443
   headers:
     X-Content-Type-Options: [nosniff]
-#  tls:
-#    certificate: /certs/fullchain.pem
-#    key: /certs/privkey.pem
+  tls:
+    certificate: /certs/dockerio.ru/fullchain.pem
+    key: /certs/dockerio.ru/privkey.pem
 
 storage:
   filesystem:
