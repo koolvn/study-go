@@ -1,0 +1,25 @@
+version: 0.1
+log:
+  fields:
+    service: registry
+    environment: production
+
+http:
+  addr: :5000
+  headers:
+    X-Content-Type-Options: [nosniff]
+#  tls:
+#    certificate: /certs/fullchain.pem
+#    key: /certs/privkey.pem
+
+storage:
+  filesystem:
+    rootdirectory: /var/lib/registry
+  cache:
+    blobdescriptor: inmemory
+
+health:
+  storagedriver:
+    enabled: true
+    interval: 10s
+    threshold: 3
