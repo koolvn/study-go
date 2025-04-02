@@ -1,20 +1,89 @@
 services:
-  openai-proxy:
-    image: openai-proxy:latest
+  openai-api-reverse-proxy:
+    image: api-reverse-proxy:latest
     build:
       context: .
-    container_name: openai-proxy
+    container_name: openai-api-reverse-proxy
     environment:
-      OPENAI_PROXY_HOST: "0.0.0.0"
-      OPENAI_PROXY_PORT: "28082"
-      OPENAI_PROXY_CERT_PATH: ""
-      OPENAI_PROXY_CERT_KEY_PATH: ""
-    ports:
-      - "28082:28082"
-    restart: "unless-stopped"
+      # Параметры для прослушивания
+      PROXY_LISTEN_HOST: "0.0.0.0"
+      PROXY_LISTEN_PORT: "28083"
+      # TLS-конфигурация (если требуется)
+      #PROXY_TLS_CERT_PATH: "/certs/fullchain.pem"
+      #PROXY_TLS_KEY_PATH: "/certs/privkey.pem"
+      # Параметры целевого сервера
+      PROXY_TARGET_SCHEME: "https"
+      PROXY_TARGET_HOST: "api.openai.com"
+    restart: unless-stopped
+    volumes:
+      - "./certs/:/certs/"
     logging:
       driver: json-file
       options:
         max-size: "10m"
         max-file: "3"
-    entrypoint: /app/openai-proxy
+    entrypoint: /app/api-reverse-proxy
+    networks:
+      - openwebui_open-webui
+
+  gemini-api-reverse-proxy:
+    image: api-reverse-proxy:latest
+    build:
+      context: .
+    container_name: gemini-api-reverse-proxy
+    environment:
+      # Параметры для прослушивания
+      PROXY_LISTEN_HOST: "0.0.0.0"
+      PROXY_LISTEN_PORT: "28084"
+      # TLS-конфигурация (если требуется)
+      #PROXY_TLS_CERT_PATH: "/certs/fullchain.pem"
+      #PROXY_TLS_KEY_PATH: "/certs/privkey.pem"
+      # Параметры целевого сервера
+      PROXY_TARGET_SCHEME: "https"
+      PROXY_TARGET_HOST: "generativelanguage.googleapis.com"
+      #ports:
+      #- "28083:28083"
+    restart: unless-stopped
+    volumes:
+      - "./certs/:/certs/"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    entrypoint: /app/api-reverse-proxy
+    networks:
+      - openwebui_open-webui
+
+  xai-api-reverse-proxy:
+    image: api-reverse-proxy:latest
+    build:
+      context: .
+    container_name: xai-api-reverse-proxy
+    environment:
+      # Параметры для прослушивания
+      PROXY_LISTEN_HOST: "0.0.0.0"
+      PROXY_LISTEN_PORT: "28085"
+      # TLS-конфигурация (если требуется)
+      #PROXY_TLS_CERT_PATH: "/certs/fullchain.pem"
+      #PROXY_TLS_KEY_PATH: "/certs/privkey.pem"
+      # Параметры целевого сервера
+      PROXY_TARGET_SCHEME: "https"
+      PROXY_TARGET_HOST: "api.x.ai"
+      #ports:
+      #- "28083:28083"
+    restart: unless-stopped
+    volumes:
+      - "./certs/:/certs/"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    entrypoint: /app/api-reverse-proxy
+    networks:
+      - openwebui_open-webui
+
+networks:
+  openwebui_open-webui:
+    external: true
