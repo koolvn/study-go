@@ -11,6 +11,6 @@ WORKDIR /app/
 RUN getent group nobody || addgroup -S nobody
 RUN id -u nobody || adduser -S nobody -G nobody
 
-COPY --from=builder /app/openai-proxy .
+COPY --from=builder /app/api-reverse-proxy .
 # Use an unprivileged user
 USER nobody:nobody
